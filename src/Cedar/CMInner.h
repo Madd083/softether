@@ -12,6 +12,8 @@
 // http://www.softether.org/
 // 
 // Author: Daiyuu Nobori
+// Contributors:
+// - ELIN (https://github.com/el1n)
 // Comments: Tetsuo Sugiyama, Ph.D.
 // 
 // 
@@ -136,6 +138,7 @@ typedef struct CM
 	HWND hStatusBar;
 	REMOTE_CLIENT *Client;
 	char *server_name;
+	char *password;
 	wchar_t *import_file_name;
 	bool HideStatusBar;
 	bool HideTrayIcon;
