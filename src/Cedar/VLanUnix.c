@@ -16,7 +16,6 @@
 // - nattoheaven (https://github.com/nattoheaven)
 // Comments: Tetsuo Sugiyama, Ph.D.
 // 
-// 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // version 2 as published by the Free Software Foundation.
@@ -87,6 +86,13 @@
 // http://www.softether.org/ and ask your question on the users forum.
 // 
 // Thank you for your cooperation.
+// 
+// 
+// NO MEMORY OR RESOURCE LEAKS
+// ---------------------------
+// 
+// The memory-leaks and resource-leaks verification under the stress
+// test has been passed before release this source code.
 
 
 // VLanUnix.c
@@ -105,6 +111,9 @@
 #include <errno.h>
 #include <Mayaqua/Mayaqua.h>
 #include <Cedar/Cedar.h>
+#ifdef	UNIX_MACOS
+#include <net/ethernet.h>
+#endif
 
 #ifdef	OS_UNIX
 
@@ -524,10 +533,11 @@ int UnixCreateTapDeviceEx(char *name, char *prefix, UCHAR *mac_address)
 
 		if (mac_address != NULL)
 		{
-			uint8_t macos_mac_address[19];
 			Zero(&ifr, sizeof(ifr));
 			StrCpy(ifr.ifr_name, sizeof(ifr.ifr_name), macos_eth_name);
-			Copy(&ifr.ifr_addr.sa_data, mac_address, 6);
+			ifr.ifr_addr.sa_len = ETHER_ADDR_LEN;
+			ifr.ifr_addr.sa_family = AF_LINK;
+			Copy(&ifr.ifr_addr.sa_data, mac_address, ETHER_ADDR_LEN);
 			ioctl(s, SIOCSIFLLADDR, &ifr);
 		}
 

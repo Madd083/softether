@@ -17,7 +17,6 @@
 // - nattoheaven (https://github.com/nattoheaven)
 // Comments: Tetsuo Sugiyama, Ph.D.
 // 
-// 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
 // version 2 as published by the Free Software Foundation.
@@ -88,6 +87,13 @@
 // http://www.softether.org/ and ask your question on the users forum.
 // 
 // Thank you for your cooperation.
+// 
+// 
+// NO MEMORY OR RESOURCE LEAKS
+// ---------------------------
+// 
+// The memory-leaks and resource-leaks verification under the stress
+// test has been passed before release this source code.
 
 
 // Unix.c
@@ -106,9 +112,11 @@
 #include <errno.h>
 #include <Mayaqua/Mayaqua.h>
 
-// Struct statfs for MacOS X
 #ifdef	UNIX_MACOS
+#include <mach/clock.h>
+#include <mach/mach.h>
 #ifdef	NO_VLAN
+// Struct statfs for MacOS X
 typedef struct fsid { int32_t val[2]; } fsid_t;
 struct statfs {
         short   f_otype;                /* TEMPORARY SHADOW COPY OF f_type */
@@ -2057,8 +2065,19 @@ UINT64 UnixGetTick64()
 	return ret;
 
 #else
-
+#ifdef	UNIX_MACOS
+	static clock_serv_t clock_serv = 0;
+	mach_timespec_t t;
+	UINT64 ret;
+	if (clock_serv == 0) {
+		host_get_clock_service(mach_host_self(), SYSTEM_CLOCK, &clock_serv);
+	}
+	clock_get_time(clock_serv, &t);
+	ret = (UINT64)t.tv_sec * 1000LL + (UINT64)t.tv_nsec / 1000000LL;
+	return ret;
+#else
 	return TickRealtimeManual();
+#endif
 
 #endif
 }
@@ -2484,7 +2503,13 @@ void UnixStopService(char *name)
 		}
 		else
 		{
+			// SIGKILL
+			char tmp[256];
+
+			Format(tmp, sizeof(tmp), "killall -KILL %s", name);
+
 			UniPrint(_UU("UNIX_SVC_STOP_FAILED"), svc_title);
+			system(tmp);
 		}
 	}
 
@@ -2553,16 +2578,16 @@ void UnixExecService(char *name, SERVICE_FUNCTION *start, SERVICE_FUNCTION *stop
 		signal(SIGTERM, &UnixSigTermHandler);
 		while (unix_svc_terminate == false)
 		{
-#ifndef	UNIX_BSD
+#if	!(defined(UNIX_BSD) || defined(UNIX_MACOS))
 			pause();
-#else	// UNIX_BSD
+#else	// defined(UNIX_BSD) || defined(UNIX_MACOS)
 			if (UnixReadCtlFile() != saved_ctl)
 			{
 				break;
 			}
 
 			SleepThread(1394);
-#endif	// UNIX_BSD
+#endif	// defined(UNIX_BSD) || defined(UNIX_MACOS)
 		}
 
 		// Stop

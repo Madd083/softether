@@ -12,8 +12,9 @@
 // http://www.softether.org/
 // 
 // Author: Daiyuu Nobori
+// Contributors:
+// - nattoheaven (https://github.com/nattoheaven)
 // Comments: Tetsuo Sugiyama, Ph.D.
-// 
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -85,6 +86,13 @@
 // http://www.softether.org/ and ask your question on the users forum.
 // 
 // Thank you for your cooperation.
+// 
+// 
+// NO MEMORY OR RESOURCE LEAKS
+// ---------------------------
+// 
+// The memory-leaks and resource-leaks verification under the stress
+// test has been passed before release this source code.
 
 
 // Kernel.c
@@ -152,7 +160,7 @@ UINT g_zero = 0;
 // Get the real-time system timer
 UINT TickRealtime()
 {
-#if	defined(OS_WIN32) || defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC) || defined(CLOCK_HIGHRES)
+#if	defined(OS_WIN32) || defined(CLOCK_REALTIME) || defined(CLOCK_MONOTONIC) || defined(CLOCK_HIGHRES) || defined(UNIX_MACOS)
 	return Tick() + 1;
 #else
 	return TickRealtimeManual() + 1;
